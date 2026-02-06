@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 
 interface CheckResult {
   allowed: boolean
@@ -52,15 +52,6 @@ export default function Home() {
     navigator.clipboard.writeText(password)
     setLaunchStep('password_copied')
   }
-
-  // Generate bookmarklet JavaScript
-  const bookmarkletHref = useMemo(() => {
-    if (!result?.credentials) return ''
-    const email = result.credentials.email.replace(/'/g, "\\'")
-    const password = result.credentials.password.replace(/'/g, "\\'")
-    const code = `javascript:void(function(){var e='${email}',p='${password}';function f(s){return document.querySelector('input[type=\"'+s+'\"]')}function q(s){return document.querySelector(s)}var ef=f('email')||q('input[name*=\"email\"]')||q('input[name*=\"user\"]')||q('input[name*=\"Email\"]')||q('input[name*=\"User\"]')||q('input[id*=\"email\"]')||q('input[id*=\"user\"]')||q('input[id*=\"loginfmt\"]');var pf=f('password');function fill(el,v){if(!el)return;var ns=Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el),'value');if(ns&&ns.set){ns.set.call(el,v)}else{el.value=v}el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));el.dispatchEvent(new Event('blur',{bubbles:true}))}if(ef||pf){fill(ef,e);fill(pf,p);alert('Bilgiler dolduruldu!')}else{alert('Giris formu bulunamadi. Sayfanin yuklenmesini bekleyin.')}}())`
-    return code
-  }, [result?.credentials])
 
   return (
     <div style={styles.container}>
@@ -121,25 +112,6 @@ export default function Home() {
 
             <div style={styles.otpNote}>
               💡 OTP kodunu her zamanki gibi alın ve giriş ekranında girin.
-            </div>
-
-            {/* Bookmarklet Section */}
-            <div style={styles.bookmarkletSection}>
-              <label style={styles.label}>Otomatik Doldurma (Bookmarklet)</label>
-              <p style={styles.bookmarkletDesc}>
-                Aşağıdaki butonu bookmark çubuğunuza sürükleyin. EOIR giriş sayfasında tıklayınca email ve şifre otomatik dolar.
-              </p>
-              <div style={styles.bookmarkletRow}>
-                <a
-                  href={bookmarkletHref}
-                  onClick={(e) => e.preventDefault()}
-                  style={styles.bookmarkletLink}
-                  title="Bu linki bookmark çubuğunuza sürükleyin"
-                >
-                  ⚡ EOIR Auto-Fill
-                </a>
-                <span style={styles.bookmarkletHint}>← Sürükle & Bırak</span>
-              </div>
             </div>
 
             {/* Smart Launch Section */}
@@ -344,43 +316,6 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#92400e',
     marginBottom: '20px',
     marginTop: '6px',
-  },
-  // Bookmarklet styles
-  bookmarkletSection: {
-    background: '#f0f9ff',
-    border: '1px solid #bae6fd',
-    borderRadius: '10px',
-    padding: '14px',
-    marginBottom: '16px',
-  },
-  bookmarkletDesc: {
-    fontSize: '12px',
-    color: '#475569',
-    margin: '0 0 10px 0',
-    lineHeight: 1.4,
-  },
-  bookmarkletRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-  },
-  bookmarkletLink: {
-    display: 'inline-block',
-    padding: '8px 16px',
-    background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
-    color: '#fff',
-    borderRadius: '8px',
-    fontSize: '13px',
-    fontWeight: 600,
-    textDecoration: 'none',
-    cursor: 'grab',
-    userSelect: 'none' as const,
-    whiteSpace: 'nowrap' as const,
-  },
-  bookmarkletHint: {
-    fontSize: '12px',
-    color: '#7c3aed',
-    fontWeight: 500,
   },
   // Launch button
   launchBtn: {
