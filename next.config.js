@@ -1,13 +1,4 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  async rewrites() {
-    return [
-      {
-        source: '/eoir-autofill.user.js',
-        destination: '/api/userscript',
-      },
-    ]
-  },
-}
+const nextConfig = {}
 
 module.exports = nextConfig

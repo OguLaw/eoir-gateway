@@ -1,27 +1,20 @@
-import { NextRequest, NextResponse } from 'next/server'
-
-export async function GET(request: NextRequest) {
-  const host = request.headers.get('host') || 'localhost:3000'
-  const proto = host.includes('localhost') ? 'http' : 'https'
-  const gatewayUrl = `${proto}://${host}`
-
-  const script = `// ==UserScript==
+// ==UserScript==
 // @name         EOIR Auto-Login
 // @namespace    eoir-gateway
-// @version      1.2
+// @version      1.3
 // @description  EOIR portalina otomatik giris (email + sifre)
 // @match        https://doj-login-ext.okta-gov.com/*
 // @grant        GM_xmlhttpRequest
-// @connect      ${host}
-// @downloadURL  ${gatewayUrl}/api/userscript
-// @updateURL    ${gatewayUrl}/api/userscript
+// @connect      eoir-gateway.vercel.app
+// @downloadURL  https://eoir-gateway.vercel.app/eoir-autofill.user.js
+// @updateURL    https://eoir-gateway.vercel.app/eoir-autofill.user.js
 // @run-at       document-start
 // ==/UserScript==
 
 (function () {
   'use strict'
 
-  var GATEWAY_URL = '${gatewayUrl}'
+  var GATEWAY_URL = 'https://eoir-gateway.vercel.app'
 
   console.log('EOIR Auto-Login: Baslatiliyor, Gateway =', GATEWAY_URL)
 
@@ -163,12 +156,3 @@ export async function GET(request: NextRequest) {
     })
   })
 })()
-`
-
-  return new NextResponse(script, {
-    headers: {
-      'Content-Type': 'text/javascript; charset=utf-8',
-      'Content-Disposition': 'inline; filename="eoir-autofill.user.js"',
-    },
-  })
-}
