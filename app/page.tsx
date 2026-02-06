@@ -28,6 +28,10 @@ export default function Home() {
 
   useEffect(() => { checkIp() }, [])
 
+  const scriptInstallUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/eoir-autofill.user.js`
+    : '/eoir-autofill.user.js'
+
   return (
     <div style={styles.container}>
       <div style={styles.card}>
@@ -44,32 +48,44 @@ export default function Home() {
           </div>
         ) : result?.allowed ? (
           <div style={styles.content}>
-            {/* Status */}
             <div style={{ ...styles.status, ...styles.statusOk }}>
               <span style={styles.statusDot}>●</span>
               VPN Aktif — IP: {result.ip}
             </div>
 
-            {/* Extension Info */}
+            {/* How it works */}
             <div style={styles.infoBox}>
-              <p style={styles.infoTitle}>Nasıl Çalışır?</p>
+              <p style={styles.infoTitle}>Otomatik Giriş</p>
               <p style={styles.infoText}>
-                Chrome extension kuruluysa EOIR portalına gittiğinizde email ve şifre <strong>otomatik doldurulur</strong>, sadece OTP kodunu girmeniz yeterli.
+                Aşağıdaki kurulumu yaptıktan sonra EOIR portalına gittiğinizde
+                email ve şifre <strong>otomatik doldurulur</strong>. Sadece OTP kodunu girmeniz yeterli.
               </p>
             </div>
 
-            {/* Extension Setup */}
+            {/* Setup steps */}
             <div style={styles.setupBox}>
-              <p style={styles.setupTitle}>Extension Kurulumu (tek seferlik)</p>
+              <p style={styles.setupTitle}>Kurulum (tek seferlik)</p>
               <div style={styles.setupSteps}>
-                <p style={styles.setupStep}>1. Chrome'da <strong>chrome://extensions</strong> sayfasını açın</p>
-                <p style={styles.setupStep}>2. Sağ üstten <strong>Geliştirici modu</strong>'nu açın</p>
-                <p style={styles.setupStep}>3. <strong>Paketlenmemiş öğe yükle</strong> → <code style={styles.code}>extension</code> klasörünü seçin</p>
-                <p style={styles.setupStep}>4. Extension ikonuna tıklayıp bu sayfanın URL'sini girin</p>
+                <p style={styles.setupStep}>
+                  <strong>1.</strong> Chrome'a{' '}
+                  <a href="https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo" target="_blank" rel="noopener noreferrer" style={styles.link}>
+                    Tampermonkey
+                  </a>
+                  {' '}eklentisini yükleyin
+                </p>
+                <p style={styles.setupStep}>
+                  <strong>2.</strong> Aşağıdaki butona tıklayın — script otomatik yüklenir
+                </p>
               </div>
+              <a href={scriptInstallUrl} style={styles.installBtn}>
+                Otomatik Giriş Script'ini Yükle
+              </a>
+              <p style={styles.setupHint}>
+                İlk çalışmada bu sayfanın URL'sini soracak, yapıştırıp onaylayın.
+              </p>
             </div>
 
-            {/* Launch Button */}
+            {/* Launch */}
             <a
               href={result.eoir_url || 'https://portal.eoir.justice.gov/'}
               target="_blank"
@@ -80,7 +96,7 @@ export default function Home() {
             </a>
 
             <p style={styles.otpNote}>
-              💡 Extension email + şifreyi otomatik doldurur. Sadece OTP kodunu girin.
+              💡 Email + şifre otomatik dolar. Sadece OTP kodunu girin.
             </p>
           </div>
         ) : (
@@ -148,13 +164,18 @@ const styles: Record<string, React.CSSProperties> = {
     background: '#f8fafc', border: '1px solid #e2e8f0',
     borderRadius: '10px', padding: '14px', marginBottom: '16px',
   },
-  setupTitle: { fontSize: '13px', fontWeight: 600, color: '#475569', margin: '0 0 8px 0' },
-  setupSteps: { display: 'flex', flexDirection: 'column' as const, gap: '4px' },
-  setupStep: { fontSize: '12px', color: '#64748b', margin: 0, lineHeight: 1.5 },
-  code: {
-    background: '#e2e8f0', padding: '1px 5px', borderRadius: '4px',
-    fontSize: '11px', fontFamily: 'monospace',
+  setupTitle: { fontSize: '13px', fontWeight: 600, color: '#475569', margin: '0 0 10px 0' },
+  setupSteps: { display: 'flex', flexDirection: 'column' as const, gap: '6px', marginBottom: '12px' },
+  setupStep: { fontSize: '13px', color: '#475569', margin: 0, lineHeight: 1.5 },
+  link: { color: '#2563eb', textDecoration: 'underline' },
+  installBtn: {
+    display: 'block', width: '100%', padding: '12px',
+    background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
+    color: '#fff', border: 'none', borderRadius: '8px',
+    fontSize: '14px', fontWeight: 600, textAlign: 'center' as const,
+    textDecoration: 'none', cursor: 'pointer', boxSizing: 'border-box' as const,
   },
+  setupHint: { fontSize: '11px', color: '#94a3b8', margin: '8px 0 0 0', textAlign: 'center' as const },
   launchBtn: {
     display: 'block', width: '100%', padding: '16px',
     background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
