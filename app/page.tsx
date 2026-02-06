@@ -81,7 +81,7 @@ export default function Home() {
                 Otomatik Giriş Script'ini Yükle
               </a>
               <p style={styles.setupHint}>
-                İlk çalışmada bu sayfanın URL'sini soracak, yapıştırıp onaylayın.
+                Gateway URL otomatik algılanır, ekstra ayar gerekmez.
               </p>
             </div>
 

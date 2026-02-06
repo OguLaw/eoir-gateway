@@ -1,138 +1,166 @@
 // ==UserScript==
 // @name         EOIR Auto-Login
 // @namespace    eoir-gateway
-// @version      1.0
+// @version      1.1
 // @description  EOIR portalına otomatik giriş (email + şifre)
 // @match        https://doj-login-ext.okta-gov.com/*
 // @grant        GM_xmlhttpRequest
-// @grant        GM_getValue
-// @grant        GM_setValue
-// @grant        GM_registerMenuCommand
+// @grant        GM_info
 // @connect      *.vercel.app
 // @connect      localhost
-// @run-at       document-idle
+// @run-at       document-start
 // ==/UserScript==
 
-(async function () {
+(function () {
   'use strict'
 
-  // Gateway URL — user can change via Tampermonkey menu
-  let GATEWAY_URL = GM_getValue('gatewayUrl', '')
-
-  GM_registerMenuCommand('Gateway URL Ayarla', () => {
-    const url = prompt('EOIR Gateway URL:', GATEWAY_URL)
-    if (url !== null) {
-      GM_setValue('gatewayUrl', url.replace(/\/+$/, ''))
-      GATEWAY_URL = url.replace(/\/+$/, '')
-      alert('Kaydedildi! Sayfayı yenileyin.')
-    }
-  })
-
-  if (!GATEWAY_URL) {
-    const url = prompt(
-      'EOIR Auto-Login: İlk kullanım.\nGateway URL\'nizi girin (örn: https://eoir-gateway.vercel.app):'
-    )
-    if (!url) return
-    GM_setValue('gatewayUrl', url.replace(/\/+$/, ''))
-    GATEWAY_URL = url.replace(/\/+$/, '')
+  // Auto-detect gateway URL from where this script was downloaded
+  var scriptUrl = (GM_info.script.downloadURL || GM_info.script.updateURL || '').trim()
+  var GATEWAY_URL = ''
+  if (scriptUrl) {
+    try { GATEWAY_URL = new URL(scriptUrl).origin } catch (e) { /* ignore */ }
   }
+  if (!GATEWAY_URL) {
+    console.log('EOIR Auto-Login: Gateway URL algılanamadı.')
+    return
+  }
+
+  console.log('EOIR Auto-Login: Gateway =', GATEWAY_URL)
 
   // Fetch credentials from gateway API
-  function fetchCredentials() {
-    return new Promise((resolve, reject) => {
-      GM_xmlhttpRequest({
-        method: 'GET',
-        url: GATEWAY_URL + '/api/check-ip',
-        onload: (res) => {
-          try {
-            resolve(JSON.parse(res.responseText))
-          } catch {
-            reject(new Error('JSON parse hatası'))
-          }
-        },
-        onerror: () => reject(new Error('Bağlantı hatası')),
-      })
+  function fetchCredentials(callback) {
+    GM_xmlhttpRequest({
+      method: 'GET',
+      url: GATEWAY_URL + '/api/check-ip',
+      onload: function (res) {
+        try {
+          var data = JSON.parse(res.responseText)
+          callback(null, data)
+        } catch (e) {
+          callback('JSON parse hatası')
+        }
+      },
+      onerror: function () { callback('Bağlantı hatası') },
     })
   }
 
-  let result
-  try {
-    result = await fetchCredentials()
-  } catch (e) {
-    console.log('EOIR Auto-Login:', e.message)
-    return
-  }
-
-  if (!result.allowed || !result.credentials) {
-    console.log('EOIR Auto-Login: VPN aktif değil.')
-    return
-  }
-
-  const { email, password } = result.credentials
-
-  // Fill input (works with React/Okta frameworks)
+  // Fill input — works with React, Angular, Okta widget
   function fillInput(el, value) {
     el.focus()
-    const setter = Object.getOwnPropertyDescriptor(
-      window.HTMLInputElement.prototype,
-      'value'
-    )?.set
-    if (setter) setter.call(el, value)
-    else el.value = value
+    // Native setter to bypass framework wrappers
+    var descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')
+    if (descriptor && descriptor.set) {
+      descriptor.set.call(el, value)
+    } else {
+      el.value = value
+    }
     el.dispatchEvent(new Event('input', { bubbles: true }))
     el.dispatchEvent(new Event('change', { bubbles: true }))
+    el.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }))
   }
 
-  // Wait for element
-  function waitFor(selector, timeout = 15000) {
-    return new Promise((resolve, reject) => {
-      const el = document.querySelector(selector)
-      if (el) return resolve(el)
-      const observer = new MutationObserver(() => {
-        const found = document.querySelector(selector)
-        if (found) { observer.disconnect(); resolve(found) }
+  // Wait for any matching element to appear
+  function waitFor(selectors, timeout) {
+    timeout = timeout || 20000
+    return new Promise(function (resolve, reject) {
+      function check() {
+        for (var i = 0; i < selectors.length; i++) {
+          var el = document.querySelector(selectors[i])
+          if (el) return el
+        }
+        return null
+      }
+      var found = check()
+      if (found) return resolve(found)
+
+      var observer = new MutationObserver(function () {
+        var el = check()
+        if (el) { observer.disconnect(); resolve(el) }
       })
-      observer.observe(document.body, { childList: true, subtree: true })
-      setTimeout(() => { observer.disconnect(); reject(new Error('Timeout: ' + selector)) }, timeout)
+      observer.observe(document.documentElement, { childList: true, subtree: true })
+      setTimeout(function () { observer.disconnect(); reject('Timeout') }, timeout)
     })
   }
 
-  function findSubmit() {
-    return (
-      document.querySelector('input[type="submit"]') ||
-      document.querySelector('button[type="submit"]') ||
-      document.querySelector('[data-type="save"]')
-    )
+  // Find submit/next button
+  function clickSubmit() {
+    var selectors = [
+      'input[type="submit"]',
+      'button[type="submit"]',
+      '[data-type="save"]',
+      'a[data-type="save"]',
+      '.button-primary',
+      '.o-form-button-bar input',
+    ]
+    for (var i = 0; i < selectors.length; i++) {
+      var btn = document.querySelector(selectors[i])
+      if (btn) { btn.click(); return true }
+    }
+    return false
   }
 
-  const delay = (ms) => new Promise((r) => setTimeout(r, ms))
+  // Main flow
+  fetchCredentials(function (err, result) {
+    if (err) {
+      console.log('EOIR Auto-Login: Hata -', err)
+      return
+    }
+    if (!result || !result.allowed || !result.credentials) {
+      console.log('EOIR Auto-Login: VPN aktif değil veya credentials yok.')
+      return
+    }
 
-  // Step 1: Email
-  try {
-    const emailInput = await waitFor(
-      'input[name="identifier"], input[type="email"], input[name="username"]'
-    )
-    await delay(400)
-    fillInput(emailInput, email)
-    await delay(300)
-    const nextBtn = findSubmit()
-    if (nextBtn) nextBtn.click()
-  } catch (e) {
-    console.log('EOIR Auto-Login: Email alanı bulunamadı', e)
-    return
-  }
+    var email = result.credentials.email
+    var password = result.credentials.password
 
-  // Step 2: Password
-  try {
-    const passInput = await waitFor('input[type="password"]')
-    await delay(400)
-    fillInput(passInput, password)
-    await delay(300)
-    const verifyBtn = findSubmit()
-    if (verifyBtn) verifyBtn.click()
-  } catch (e) {
-    console.log('EOIR Auto-Login: Şifre alanı bulunamadı', e)
-  }
+    console.log('EOIR Auto-Login: Credentials alındı, form bekleniyor...')
 
-  // Step 3: OTP left to user
+    // Step 1: Email
+    var emailSelectors = [
+      'input[name="identifier"]',
+      'input[name="username"]',
+      'input[type="email"]',
+      'input[id*="identifier"]',
+      'input[id*="username"]',
+      'input[id*="okta-signin-username"]',
+      'input[autocomplete="username"]',
+    ]
+
+    waitFor(emailSelectors, 30000).then(function (emailInput) {
+      console.log('EOIR Auto-Login: Email alanı bulundu:', emailInput.name || emailInput.id)
+      setTimeout(function () {
+        fillInput(emailInput, email)
+        setTimeout(function () {
+          console.log('EOIR Auto-Login: Next tıklanıyor...')
+          clickSubmit()
+
+          // Step 2: Password — wait for it to appear after email submission
+          var passSelectors = [
+            'input[type="password"]',
+            'input[name="credentials.passcode"]',
+            'input[name="passcode"]',
+            'input[id*="password"]',
+            'input[id*="okta-signin-password"]',
+            'input[autocomplete="current-password"]',
+          ]
+
+          waitFor(passSelectors, 30000).then(function (passInput) {
+            console.log('EOIR Auto-Login: Şifre alanı bulundu:', passInput.name || passInput.id)
+            setTimeout(function () {
+              fillInput(passInput, password)
+              setTimeout(function () {
+                console.log('EOIR Auto-Login: Verify tıklanıyor...')
+                clickSubmit()
+                console.log('EOIR Auto-Login: Tamamlandı — OTP bekleniyor.')
+              }, 500)
+            }, 600)
+          }).catch(function () {
+            console.log('EOIR Auto-Login: Şifre alanı bulunamadı.')
+          })
+        }, 500)
+      }, 600)
+    }).catch(function () {
+      console.log('EOIR Auto-Login: Email alanı bulunamadı.')
+    })
+  })
 })()
