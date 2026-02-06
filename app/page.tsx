@@ -53,36 +53,110 @@ export default function Home() {
               VPN Aktif — IP: {result.ip}
             </div>
 
-            {/* How it works */}
-            <div style={styles.infoBox}>
-              <p style={styles.infoTitle}>Otomatik Giriş</p>
-              <p style={styles.infoText}>
-                Aşağıdaki kurulumu yaptıktan sonra EOIR portalına gittiğinizde
-                email ve şifre <strong>otomatik doldurulur</strong>. Sadece OTP kodunu girmeniz yeterli.
+            {/* Setup Guide */}
+            <div style={styles.guideBox}>
+              <p style={styles.guideMainTitle}>Kurulum Rehberi</p>
+              <p style={styles.guideDesc}>
+                Bu kurulumu <strong>sadece bir kez</strong> yapmanız yeterli.
+                Sonrasında EOIR portalına her girişinizde email ve şifre otomatik doldurulur.
               </p>
-            </div>
 
-            {/* Setup steps */}
-            <div style={styles.setupBox}>
-              <p style={styles.setupTitle}>Kurulum (tek seferlik)</p>
-              <div style={styles.setupSteps}>
-                <p style={styles.setupStep}>
-                  <strong>1.</strong> Chrome'a{' '}
-                  <a href="https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo" target="_blank" rel="noopener noreferrer" style={styles.link}>
-                    Tampermonkey
+              {/* Step 1 */}
+              <div style={styles.stepBox}>
+                <div style={styles.stepHeader}>
+                  <span style={styles.stepBadge}>1</span>
+                  <span style={styles.stepTitle}>Tampermonkey Eklentisini Yükleyin</span>
+                </div>
+                <div style={styles.stepBody}>
+                  <p style={styles.stepText}>
+                    Aşağıdaki bağlantıya tıklayın. Açılan sayfada mavi <strong>&quot;Chrome&apos;a Ekle&quot;</strong> butonuna tıklayın.
+                  </p>
+                  <a
+                    href="https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={styles.stepBtn}
+                  >
+                    Chrome Web Store &rarr; Tampermonkey
                   </a>
-                  {' '}eklentisini yükleyin
-                </p>
-                <p style={styles.setupStep}>
-                  <strong>2.</strong> Aşağıdaki butona tıklayın — script otomatik yüklenir
-                </p>
+                  <p style={styles.stepText}>
+                    Açılan pencerede <strong>&quot;Uzantıyı ekle&quot;</strong> (Add extension) butonuna tıklayın.
+                  </p>
+                </div>
               </div>
-              <a href={scriptInstallUrl} style={styles.installBtn}>
-                Otomatik Giriş Script'ini Yükle
-              </a>
-              <p style={styles.setupHint}>
-                Gateway URL otomatik algılanır, ekstra ayar gerekmez.
-              </p>
+
+              {/* Step 2 */}
+              <div style={styles.stepBox}>
+                <div style={styles.stepHeader}>
+                  <span style={styles.stepBadge}>2</span>
+                  <span style={styles.stepTitle}>Tampermonkey İzinlerini Açın</span>
+                </div>
+                <div style={styles.stepBody}>
+                  <p style={styles.stepText}>
+                    Chrome&apos;un sağ üst köşesindeki <strong>puzzle (yapboz) ikonuna</strong> tıklayın.
+                  </p>
+                  <p style={styles.stepText}>
+                    <strong>Tampermonkey</strong> satırının yanındaki <strong>üç nokta (&middot;&middot;&middot;)</strong> menüsüne tıklayın.
+                  </p>
+                  <p style={styles.stepText}>
+                    <strong>&quot;Uzantıyı yönet&quot;</strong> (Manage extension) seçeneğini tıklayın.
+                  </p>
+                  <p style={styles.stepText}>
+                    Açılan sayfada şu ayarları <strong>açık</strong> (mavi) yapın:
+                  </p>
+                  <div style={styles.settingsList}>
+                    <div style={styles.settingItem}>
+                      <span style={styles.toggleOn}>●</span>
+                      <span>Dosya URL&apos;lerine erişime izin ver</span>
+                    </div>
+                    <div style={styles.settingItem}>
+                      <span style={styles.toggleOn}>●</span>
+                      <span>Tüm sitelerde (All sites)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 3 */}
+              <div style={styles.stepBox}>
+                <div style={styles.stepHeader}>
+                  <span style={styles.stepBadge}>3</span>
+                  <span style={styles.stepTitle}>Otomatik Giriş Script&apos;ini Yükleyin</span>
+                </div>
+                <div style={styles.stepBody}>
+                  <p style={styles.stepText}>
+                    Aşağıdaki butona tıklayın. Tampermonkey otomatik olarak bir kurulum penceresi açacak.
+                  </p>
+                  <a href={scriptInstallUrl} style={styles.installBtn}>
+                    Otomatik Giriş Script&apos;ini Yükle
+                  </a>
+                  <p style={styles.stepText}>
+                    Açılan pencerede <strong>&quot;Install&quot;</strong> (Yükle) butonuna tıklayın.
+                  </p>
+                  <p style={styles.stepNote}>
+                    Eğer kurulum penceresi açılmazsa: Tampermonkey Dashboard&apos;unu açın &rarr; &quot;+&quot; ikonuna tıklayın &rarr;
+                    Script alanına{' '}
+                    <a href={scriptInstallUrl} target="_blank" rel="noopener noreferrer" style={styles.linkInline}>
+                      bu linkteki
+                    </a>
+                    {' '}kodun tamamını yapıştırıp kaydedin.
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 4 */}
+              <div style={styles.stepBox}>
+                <div style={styles.stepHeader}>
+                  <span style={{ ...styles.stepBadge, background: '#22c55e' }}>✓</span>
+                  <span style={styles.stepTitle}>Hazır!</span>
+                </div>
+                <div style={styles.stepBody}>
+                  <p style={styles.stepText}>
+                    Artık aşağıdaki butona tıkladığınızda email ve şifre <strong>otomatik doldurulacak</strong>.
+                    Sadece <strong>OTP kodunuzu</strong> girmeniz yeterli.
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Launch */}
@@ -92,11 +166,11 @@ export default function Home() {
               rel="noopener noreferrer"
               style={styles.launchBtn}
             >
-              EOIR Portalına Git →
+              EOIR Portalına Git &rarr;
             </a>
 
             <p style={styles.otpNote}>
-              💡 Email + şifre otomatik dolar. Sadece OTP kodunu girin.
+              💡 Email ve şifre otomatik dolar. Sadece telefonunuza gelen OTP kodunu girin.
             </p>
           </div>
         ) : (
@@ -128,7 +202,7 @@ const styles: Record<string, React.CSSProperties> = {
   card: {
     background: '#ffffff', borderRadius: '16px',
     boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
-    width: '100%', maxWidth: '440px', overflow: 'hidden',
+    width: '100%', maxWidth: '480px', overflow: 'hidden',
   },
   header: {
     background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
@@ -154,28 +228,73 @@ const styles: Record<string, React.CSSProperties> = {
   statusOk: { background: '#f0fdf4', color: '#166534' },
   statusError: { background: '#fef2f2', color: '#991b1b' },
   statusDot: { fontSize: '10px' },
-  infoBox: {
-    background: '#eff6ff', border: '1px solid #bfdbfe',
-    borderRadius: '10px', padding: '14px', marginBottom: '14px',
+
+  // Guide
+  guideBox: { marginBottom: '20px' },
+  guideMainTitle: {
+    fontSize: '18px', fontWeight: 700, color: '#1e293b',
+    margin: '0 0 6px 0',
   },
-  infoTitle: { fontSize: '14px', fontWeight: 600, color: '#1e40af', margin: '0 0 6px 0' },
-  infoText: { fontSize: '13px', color: '#1e3a5f', margin: 0, lineHeight: 1.5 },
-  setupBox: {
+  guideDesc: {
+    fontSize: '13px', color: '#64748b', lineHeight: 1.5,
+    margin: '0 0 16px 0',
+  },
+
+  // Steps
+  stepBox: {
     background: '#f8fafc', border: '1px solid #e2e8f0',
-    borderRadius: '10px', padding: '14px', marginBottom: '16px',
+    borderRadius: '10px', padding: '14px', marginBottom: '12px',
   },
-  setupTitle: { fontSize: '13px', fontWeight: 600, color: '#475569', margin: '0 0 10px 0' },
-  setupSteps: { display: 'flex', flexDirection: 'column' as const, gap: '6px', marginBottom: '12px' },
-  setupStep: { fontSize: '13px', color: '#475569', margin: 0, lineHeight: 1.5 },
-  link: { color: '#2563eb', textDecoration: 'underline' },
+  stepHeader: {
+    display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px',
+  },
+  stepBadge: {
+    width: '26px', height: '26px', borderRadius: '50%',
+    background: '#3b82f6', color: '#fff',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: '13px', fontWeight: 700, flexShrink: 0,
+  },
+  stepTitle: { fontSize: '14px', fontWeight: 600, color: '#1e293b' },
+  stepBody: { marginLeft: '36px' },
+  stepText: {
+    fontSize: '13px', color: '#475569', lineHeight: 1.6,
+    margin: '0 0 8px 0',
+  },
+  stepNote: {
+    fontSize: '11px', color: '#94a3b8', lineHeight: 1.5,
+    margin: '10px 0 0 0', fontStyle: 'italic' as const,
+  },
+  stepBtn: {
+    display: 'block', padding: '10px 14px', marginBottom: '10px',
+    background: '#1e293b', color: '#fff', borderRadius: '8px',
+    fontSize: '13px', fontWeight: 600, textDecoration: 'none',
+    textAlign: 'center' as const,
+  },
+
+  // Settings list
+  settingsList: {
+    display: 'flex', flexDirection: 'column' as const, gap: '6px',
+    margin: '8px 0 0 0',
+  },
+  settingItem: {
+    display: 'flex', alignItems: 'center', gap: '8px',
+    background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px',
+    padding: '8px 12px', fontSize: '13px', color: '#334155',
+  },
+  toggleOn: { color: '#3b82f6', fontSize: '18px', lineHeight: 1 },
+
+  // Install button
   installBtn: {
     display: 'block', width: '100%', padding: '12px',
     background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
     color: '#fff', border: 'none', borderRadius: '8px',
     fontSize: '14px', fontWeight: 600, textAlign: 'center' as const,
     textDecoration: 'none', cursor: 'pointer', boxSizing: 'border-box' as const,
+    marginBottom: '10px',
   },
-  setupHint: { fontSize: '11px', color: '#94a3b8', margin: '8px 0 0 0', textAlign: 'center' as const },
+  linkInline: { color: '#7c3aed', textDecoration: 'underline' },
+
+  // Launch
   launchBtn: {
     display: 'block', width: '100%', padding: '16px',
     background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
