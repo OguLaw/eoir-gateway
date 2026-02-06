@@ -29,8 +29,8 @@ export default function Home() {
   useEffect(() => { checkIp() }, [])
 
   const scriptInstallUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/eoir-autofill.user.js`
-    : '/eoir-autofill.user.js'
+    ? `${window.location.origin}/api/userscript`
+    : '/api/userscript'
 
   return (
     <div style={styles.container}>

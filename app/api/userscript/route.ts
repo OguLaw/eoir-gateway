@@ -1,33 +1,30 @@
-// ==UserScript==
+import { NextRequest, NextResponse } from 'next/server'
+
+export async function GET(request: NextRequest) {
+  const host = request.headers.get('host') || 'localhost:3000'
+  const proto = host.includes('localhost') ? 'http' : 'https'
+  const gatewayUrl = `${proto}://${host}`
+
+  const script = `// ==UserScript==
 // @name         EOIR Auto-Login
 // @namespace    eoir-gateway
-// @version      1.1
-// @description  EOIR portalına otomatik giriş (email + şifre)
+// @version      1.2
+// @description  EOIR portalina otomatik giris (email + sifre)
 // @match        https://doj-login-ext.okta-gov.com/*
 // @grant        GM_xmlhttpRequest
-// @grant        GM_info
-// @connect      *.vercel.app
-// @connect      localhost
+// @connect      ${host}
+// @downloadURL  ${gatewayUrl}/api/userscript
+// @updateURL    ${gatewayUrl}/api/userscript
 // @run-at       document-start
 // ==/UserScript==
 
 (function () {
   'use strict'
 
-  // Auto-detect gateway URL from where this script was downloaded
-  var scriptUrl = (GM_info.script.downloadURL || GM_info.script.updateURL || '').trim()
-  var GATEWAY_URL = ''
-  if (scriptUrl) {
-    try { GATEWAY_URL = new URL(scriptUrl).origin } catch (e) { /* ignore */ }
-  }
-  if (!GATEWAY_URL) {
-    console.log('EOIR Auto-Login: Gateway URL algılanamadı.')
-    return
-  }
+  var GATEWAY_URL = '${gatewayUrl}'
 
-  console.log('EOIR Auto-Login: Gateway =', GATEWAY_URL)
+  console.log('EOIR Auto-Login: Baslatiliyor, Gateway =', GATEWAY_URL)
 
-  // Fetch credentials from gateway API
   function fetchCredentials(callback) {
     GM_xmlhttpRequest({
       method: 'GET',
@@ -35,19 +32,22 @@
       onload: function (res) {
         try {
           var data = JSON.parse(res.responseText)
+          console.log('EOIR Auto-Login: API yaniti -', data.allowed ? 'VPN aktif' : 'VPN aktif degil')
           callback(null, data)
         } catch (e) {
-          callback('JSON parse hatası')
+          console.log('EOIR Auto-Login: JSON parse hatasi')
+          callback('JSON parse hatasi')
         }
       },
-      onerror: function () { callback('Bağlantı hatası') },
+      onerror: function (e) {
+        console.log('EOIR Auto-Login: Baglanti hatasi', e)
+        callback('Baglanti hatasi')
+      },
     })
   }
 
-  // Fill input — works with React, Angular, Okta widget
   function fillInput(el, value) {
     el.focus()
-    // Native setter to bypass framework wrappers
     var descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')
     if (descriptor && descriptor.set) {
       descriptor.set.call(el, value)
@@ -59,9 +59,8 @@
     el.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }))
   }
 
-  // Wait for any matching element to appear
   function waitFor(selectors, timeout) {
-    timeout = timeout || 20000
+    timeout = timeout || 30000
     return new Promise(function (resolve, reject) {
       function check() {
         for (var i = 0; i < selectors.length; i++) {
@@ -82,7 +81,6 @@
     })
   }
 
-  // Find submit/next button
   function clickSubmit() {
     var selectors = [
       'input[type="submit"]',
@@ -94,28 +92,30 @@
     ]
     for (var i = 0; i < selectors.length; i++) {
       var btn = document.querySelector(selectors[i])
-      if (btn) { btn.click(); return true }
+      if (btn) {
+        console.log('EOIR Auto-Login: Buton tiklandi -', selectors[i])
+        btn.click()
+        return true
+      }
     }
+    console.log('EOIR Auto-Login: Submit butonu bulunamadi')
     return false
   }
 
-  // Main flow
   fetchCredentials(function (err, result) {
     if (err) {
       console.log('EOIR Auto-Login: Hata -', err)
       return
     }
     if (!result || !result.allowed || !result.credentials) {
-      console.log('EOIR Auto-Login: VPN aktif değil veya credentials yok.')
+      console.log('EOIR Auto-Login: VPN aktif degil veya credentials yok.')
       return
     }
 
     var email = result.credentials.email
     var password = result.credentials.password
+    console.log('EOIR Auto-Login: Credentials alindi, form bekleniyor...')
 
-    console.log('EOIR Auto-Login: Credentials alındı, form bekleniyor...')
-
-    // Step 1: Email
     var emailSelectors = [
       'input[name="identifier"]',
       'input[name="username"]',
@@ -127,14 +127,13 @@
     ]
 
     waitFor(emailSelectors, 30000).then(function (emailInput) {
-      console.log('EOIR Auto-Login: Email alanı bulundu:', emailInput.name || emailInput.id)
+      console.log('EOIR Auto-Login: Email alani bulundu -', emailInput.name || emailInput.id || emailInput.type)
       setTimeout(function () {
         fillInput(emailInput, email)
+        console.log('EOIR Auto-Login: Email dolduruldu')
         setTimeout(function () {
-          console.log('EOIR Auto-Login: Next tıklanıyor...')
           clickSubmit()
 
-          // Step 2: Password — wait for it to appear after email submission
           var passSelectors = [
             'input[type="password"]',
             'input[name="credentials.passcode"]',
@@ -145,22 +144,31 @@
           ]
 
           waitFor(passSelectors, 30000).then(function (passInput) {
-            console.log('EOIR Auto-Login: Şifre alanı bulundu:', passInput.name || passInput.id)
+            console.log('EOIR Auto-Login: Sifre alani bulundu -', passInput.name || passInput.id || passInput.type)
             setTimeout(function () {
               fillInput(passInput, password)
+              console.log('EOIR Auto-Login: Sifre dolduruldu')
               setTimeout(function () {
-                console.log('EOIR Auto-Login: Verify tıklanıyor...')
                 clickSubmit()
-                console.log('EOIR Auto-Login: Tamamlandı — OTP bekleniyor.')
+                console.log('EOIR Auto-Login: Tamamlandi - OTP bekleniyor.')
               }, 500)
             }, 600)
           }).catch(function () {
-            console.log('EOIR Auto-Login: Şifre alanı bulunamadı.')
+            console.log('EOIR Auto-Login: Sifre alani bulunamadi (timeout)')
           })
         }, 500)
       }, 600)
     }).catch(function () {
-      console.log('EOIR Auto-Login: Email alanı bulunamadı.')
+      console.log('EOIR Auto-Login: Email alani bulunamadi (timeout)')
     })
   })
 })()
+`
+
+  return new NextResponse(script, {
+    headers: {
+      'Content-Type': 'text/javascript; charset=utf-8',
+      'Content-Disposition': 'inline; filename="eoir-autofill.user.js"',
+    },
+  })
+}
