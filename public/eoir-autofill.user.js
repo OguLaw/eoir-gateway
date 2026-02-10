@@ -226,6 +226,7 @@
                   console.log('EOIR Auto-Login: Page transitioned, looking for OTP field...')
 
                   var otpSelectors = [
+                    'input[name="credentials.totp"]',
                     'input[name="credentials.passcode"]',
                     'input[name="answer"]',
                     'input[type="tel"]',
