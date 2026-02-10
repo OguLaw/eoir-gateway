@@ -93,56 +93,36 @@ export default function Home() {
                 </div>
                 <div style={styles.stepBody}>
                   <p style={styles.stepText}>
-                    Click the <strong>puzzle (jigsaw) icon</strong> in the top-right corner of Chrome.
+                    Click the <strong>puzzle icon</strong> in the top-right corner of Chrome.
                   </p>
+                  <img src="/guide-puzzle-icon.jpg" alt="Chrome puzzle icon" style={styles.guideImg} />
+
                   <p style={styles.stepText}>
-                    Click the <strong>three dots (&middot;&middot;&middot;)</strong> menu next to <strong>Tampermonkey</strong>.
+                    Click the <strong>three dots (&middot;&middot;&middot;)</strong> next to <strong>Tampermonkey</strong>, then select <strong>&quot;Manage extension&quot;</strong>.
                   </p>
+                  <img src="/guide-manage-extension.jpg" alt="Manage extension menu" style={styles.guideImg} />
+
                   <p style={styles.stepText}>
-                    Select <strong>&quot;Manage extension&quot;</strong>.
-                  </p>
-                  <p style={styles.stepText}>
-                    On the extension page, make sure the following settings are <strong>enabled</strong> (blue):
+                    On the extension page, make sure the following settings are configured:
                   </p>
                   <div style={styles.settingsList}>
                     <div style={styles.settingItem}>
                       <span style={styles.toggleOn}>●</span>
-                      <span>Allow access to file URLs</span>
+                      <span>Site access &rarr; <strong>On all sites</strong></span>
                     </div>
                     <div style={styles.settingItem}>
                       <span style={styles.toggleOn}>●</span>
-                      <span>On all sites</span>
+                      <span><strong>Allow User Scripts</strong> &rarr; enabled (blue)</span>
                     </div>
                   </div>
+                  <img src="/guide-extension-settings.png" alt="Extension settings - Site access and Allow User Scripts" style={styles.guideImg} />
                 </div>
               </div>
 
-              {/* Step 3 - Allow User Scripts */}
+              {/* Step 3 */}
               <div style={styles.stepBox}>
                 <div style={styles.stepHeader}>
                   <span style={styles.stepBadge}>3</span>
-                  <span style={styles.stepTitle}>Allow User Scripts in Chrome</span>
-                </div>
-                <div style={styles.stepBody}>
-                  <p style={styles.stepText}>
-                    Open Chrome and go to <strong>chrome://settings/content/javascript</strong> in the address bar.
-                  </p>
-                  <p style={styles.stepText}>
-                    Alternatively: Chrome Settings &rarr; Privacy &amp; Security &rarr; Site Settings &rarr; JavaScript.
-                  </p>
-                  <p style={styles.stepText}>
-                    Find and enable the <strong>&quot;Allow sites to use JavaScript with User Scripts&quot;</strong> toggle.
-                  </p>
-                  <p style={styles.stepNote}>
-                    This setting is required for Tampermonkey to run user scripts on websites.
-                  </p>
-                </div>
-              </div>
-
-              {/* Step 4 */}
-              <div style={styles.stepBox}>
-                <div style={styles.stepHeader}>
-                  <span style={styles.stepBadge}>4</span>
                   <span style={styles.stepTitle}>Install the Auto-Login Script</span>
                 </div>
                 <div style={styles.stepBody}>
@@ -166,7 +146,7 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Step 5 */}
+              {/* Step 4 */}
               <div style={styles.stepBox}>
                 <div style={styles.stepHeader}>
                   <span style={{ ...styles.stepBadge, background: '#22c55e' }}>✓</span>
@@ -304,6 +284,10 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '8px 12px', fontSize: '13px', color: '#334155',
   },
   toggleOn: { color: '#3b82f6', fontSize: '18px', lineHeight: 1 },
+  guideImg: {
+    width: '100%', borderRadius: '6px', border: '1px solid #e2e8f0',
+    marginBottom: '10px',
+  },
 
   // Install button
   installBtn: {
