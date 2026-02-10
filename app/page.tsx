@@ -21,7 +21,7 @@ export default function Home() {
       const data = await res.json()
       setResult(data)
     } catch {
-      setResult({ allowed: false, ip: 'error', message: 'Bağlantı hatası. Tekrar deneyin.' })
+      setResult({ allowed: false, ip: 'error', message: 'Connection error. Please try again.' })
     }
     setLoading(false)
   }
@@ -38,38 +38,38 @@ export default function Home() {
         <div style={styles.header}>
           <div style={styles.icon}>⚖️</div>
           <h1 style={styles.title}>EOIR Gateway</h1>
-          <p style={styles.subtitle}>Güvenli Erişim Portalı</p>
+          <p style={styles.subtitle}>Secure Access Portal</p>
         </div>
 
         {loading ? (
           <div style={styles.loading}>
             <div style={styles.spinner} />
-            <p style={styles.loadingText}>IP kontrol ediliyor...</p>
+            <p style={styles.loadingText}>Checking IP address...</p>
           </div>
         ) : result?.allowed ? (
           <div style={styles.content}>
             <div style={{ ...styles.status, ...styles.statusOk }}>
               <span style={styles.statusDot}>●</span>
-              VPN Aktif — IP: {result.ip}
+              VPN Active — IP: {result.ip}
             </div>
 
             {/* Setup Guide */}
             <div style={styles.guideBox}>
-              <p style={styles.guideMainTitle}>Kurulum Rehberi</p>
+              <p style={styles.guideMainTitle}>Setup Guide</p>
               <p style={styles.guideDesc}>
-                Bu kurulumu <strong>sadece bir kez</strong> yapmanız yeterli.
-                Sonrasında EOIR portalına her girişinizde email ve şifre otomatik doldurulur.
+                You only need to complete this setup <strong>once</strong>.
+                After that, email, password, and OTP will be filled automatically every time you access the EOIR portal.
               </p>
 
               {/* Step 1 */}
               <div style={styles.stepBox}>
                 <div style={styles.stepHeader}>
                   <span style={styles.stepBadge}>1</span>
-                  <span style={styles.stepTitle}>Tampermonkey Eklentisini Yükleyin</span>
+                  <span style={styles.stepTitle}>Install the Tampermonkey Extension</span>
                 </div>
                 <div style={styles.stepBody}>
                   <p style={styles.stepText}>
-                    Aşağıdaki bağlantıya tıklayın. Açılan sayfada mavi <strong>&quot;Chrome&apos;a Ekle&quot;</strong> butonuna tıklayın.
+                    Click the link below. On the page that opens, click the blue <strong>&quot;Add to Chrome&quot;</strong> button.
                   </p>
                   <a
                     href="https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo"
@@ -80,7 +80,7 @@ export default function Home() {
                     Chrome Web Store &rarr; Tampermonkey
                   </a>
                   <p style={styles.stepText}>
-                    Açılan pencerede <strong>&quot;Uzantıyı ekle&quot;</strong> (Add extension) butonuna tıklayın.
+                    In the popup window, click <strong>&quot;Add extension&quot;</strong>.
                   </p>
                 </div>
               </div>
@@ -89,57 +89,52 @@ export default function Home() {
               <div style={styles.stepBox}>
                 <div style={styles.stepHeader}>
                   <span style={styles.stepBadge}>2</span>
-                  <span style={styles.stepTitle}>Tampermonkey İzinlerini Açın</span>
+                  <span style={styles.stepTitle}>Enable Tampermonkey Permissions</span>
                 </div>
                 <div style={styles.stepBody}>
                   <p style={styles.stepText}>
-                    Chrome&apos;un sağ üst köşesindeki <strong>puzzle (yapboz) ikonuna</strong> tıklayın.
+                    Click the <strong>puzzle (jigsaw) icon</strong> in the top-right corner of Chrome.
                   </p>
                   <p style={styles.stepText}>
-                    <strong>Tampermonkey</strong> satırının yanındaki <strong>üç nokta (&middot;&middot;&middot;)</strong> menüsüne tıklayın.
+                    Click the <strong>three dots (&middot;&middot;&middot;)</strong> menu next to <strong>Tampermonkey</strong>.
                   </p>
                   <p style={styles.stepText}>
-                    <strong>&quot;Uzantıyı yönet&quot;</strong> (Manage extension) seçeneğini tıklayın.
+                    Select <strong>&quot;Manage extension&quot;</strong>.
                   </p>
                   <p style={styles.stepText}>
-                    Açılan sayfada şu ayarları <strong>açık</strong> (mavi) yapın:
+                    On the extension page, make sure the following settings are <strong>enabled</strong> (blue):
                   </p>
                   <div style={styles.settingsList}>
                     <div style={styles.settingItem}>
                       <span style={styles.toggleOn}>●</span>
-                      <span>Dosya URL&apos;lerine erişime izin ver</span>
+                      <span>Allow access to file URLs</span>
                     </div>
                     <div style={styles.settingItem}>
                       <span style={styles.toggleOn}>●</span>
-                      <span>Tüm sitelerde (All sites)</span>
+                      <span>On all sites</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Step 3 */}
+              {/* Step 3 - Allow User Scripts */}
               <div style={styles.stepBox}>
                 <div style={styles.stepHeader}>
                   <span style={styles.stepBadge}>3</span>
-                  <span style={styles.stepTitle}>Otomatik Giriş Script&apos;ini Yükleyin</span>
+                  <span style={styles.stepTitle}>Allow User Scripts in Chrome</span>
                 </div>
                 <div style={styles.stepBody}>
                   <p style={styles.stepText}>
-                    Aşağıdaki butona tıklayın. Tampermonkey otomatik olarak bir kurulum penceresi açacak.
+                    Open Chrome and go to <strong>chrome://settings/content/javascript</strong> in the address bar.
                   </p>
-                  <a href={scriptInstallUrl} style={styles.installBtn}>
-                    Otomatik Giriş Script&apos;ini Yükle
-                  </a>
                   <p style={styles.stepText}>
-                    Açılan pencerede <strong>&quot;Install&quot;</strong> (Yükle) butonuna tıklayın.
+                    Alternatively: Chrome Settings &rarr; Privacy &amp; Security &rarr; Site Settings &rarr; JavaScript.
+                  </p>
+                  <p style={styles.stepText}>
+                    Find and enable the <strong>&quot;Allow sites to use JavaScript with User Scripts&quot;</strong> toggle.
                   </p>
                   <p style={styles.stepNote}>
-                    Eğer kurulum penceresi açılmazsa: Tampermonkey Dashboard&apos;unu açın &rarr; &quot;+&quot; ikonuna tıklayın &rarr;
-                    Script alanına{' '}
-                    <a href={scriptInstallUrl} target="_blank" rel="noopener noreferrer" style={styles.linkInline}>
-                      bu linkteki
-                    </a>
-                    {' '}kodun tamamını yapıştırıp kaydedin.
+                    This setting is required for Tampermonkey to run user scripts on websites.
                   </p>
                 </div>
               </div>
@@ -147,13 +142,40 @@ export default function Home() {
               {/* Step 4 */}
               <div style={styles.stepBox}>
                 <div style={styles.stepHeader}>
-                  <span style={{ ...styles.stepBadge, background: '#22c55e' }}>✓</span>
-                  <span style={styles.stepTitle}>Hazır!</span>
+                  <span style={styles.stepBadge}>4</span>
+                  <span style={styles.stepTitle}>Install the Auto-Login Script</span>
                 </div>
                 <div style={styles.stepBody}>
                   <p style={styles.stepText}>
-                    Artık aşağıdaki butona tıkladığınızda email ve şifre <strong>otomatik doldurulacak</strong>.
-                    Sadece <strong>OTP kodunuzu</strong> girmeniz yeterli.
+                    Click the button below. Tampermonkey will automatically open an installation window.
+                  </p>
+                  <a href={scriptInstallUrl} style={styles.installBtn}>
+                    Install Auto-Login Script
+                  </a>
+                  <p style={styles.stepText}>
+                    In the window that opens, click the <strong>&quot;Install&quot;</strong> button.
+                  </p>
+                  <p style={styles.stepNote}>
+                    If the installation window doesn&apos;t open: Open Tampermonkey Dashboard &rarr; Click the &quot;+&quot; icon &rarr;
+                    Paste the entire code from{' '}
+                    <a href={scriptInstallUrl} target="_blank" rel="noopener noreferrer" style={styles.linkInline}>
+                      this link
+                    </a>
+                    {' '}and save it.
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 5 */}
+              <div style={styles.stepBox}>
+                <div style={styles.stepHeader}>
+                  <span style={{ ...styles.stepBadge, background: '#22c55e' }}>✓</span>
+                  <span style={styles.stepTitle}>Ready!</span>
+                </div>
+                <div style={styles.stepBody}>
+                  <p style={styles.stepText}>
+                    Now when you click the button below, email, password, and OTP will be <strong>filled automatically</strong>.
+                    The entire login process is fully automated.
                   </p>
                 </div>
               </div>
@@ -166,25 +188,25 @@ export default function Home() {
               rel="noopener noreferrer"
               style={styles.launchBtn}
             >
-              EOIR Portalına Git &rarr;
+              Go to EOIR Portal &rarr;
             </a>
 
             <p style={styles.otpNote}>
-              💡 Email ve şifre otomatik dolar. Sadece telefonunuza gelen OTP kodunu girin.
+              Email, password, and OTP are all filled automatically. No manual entry needed.
             </p>
           </div>
         ) : (
           <div style={styles.content}>
             <div style={{ ...styles.status, ...styles.statusError }}>
               <span style={styles.statusDot}>●</span>
-              VPN Bağlantısı Bulunamadı
+              VPN Connection Not Found
             </div>
             <div style={styles.errorBox}>
               <p style={styles.errorText}>{result?.message}</p>
-              <p style={styles.ipText}>Algılanan IP: {result?.ip}</p>
+              <p style={styles.ipText}>Detected IP: {result?.ip}</p>
             </div>
             <button style={styles.retryBtn} onClick={checkIp}>
-              Tekrar Kontrol Et
+              Check Again
             </button>
           </div>
         )}
@@ -303,9 +325,9 @@ const styles: Record<string, React.CSSProperties> = {
     textDecoration: 'none', cursor: 'pointer', boxSizing: 'border-box' as const,
   },
   otpNote: {
-    background: '#fffbeb', border: '1px solid #fde68a',
+    background: '#f0fdf4', border: '1px solid #bbf7d0',
     borderRadius: '8px', padding: '12px', fontSize: '13px',
-    color: '#92400e', marginTop: '14px', textAlign: 'center' as const,
+    color: '#166534', marginTop: '14px', textAlign: 'center' as const,
   },
   errorBox: { textAlign: 'center' as const, padding: '20px 0' },
   errorText: { fontSize: '15px', color: '#475569', margin: '0 0 8px 0' },
