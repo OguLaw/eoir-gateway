@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EOIR Auto-Login
 // @namespace    eoir-gateway
-// @version      2.3
+// @version      2.4
 // @description  EOIR portal auto-login (email + password + OTP)
 // @match        https://doj-login-ext.okta-gov.com/*
 // @match        https://portal.eoir.justice.gov/*
@@ -165,31 +165,97 @@
   }
 
   // --- OTP handling (works for both SPA transition and full page reload) ---
-  function handleOtp() {
-    var otpSelectors = [
-      'input[name="credentials.totp"]',
-      'input[name="answer"]',
-      'input[data-se="input-credentials.totp"]',
-    ]
 
-    waitFor(otpSelectors, 30000).then(function (otpInput) {
-      console.log('EOIR Auto-Login: OTP alani bulundu -', otpInput.name || otpInput.id)
-      fetchOtpCode(1, 3, function (err, code) {
-        if (err) {
-          console.log('EOIR Auto-Login: OTP hatasi -', err)
-          return
+  // Check if authenticator selection menu is present and click "Enter a code" (Okta Verify TOTP)
+  function handleAuthenticatorSelection() {
+    var mfaSelectors = [
+      'div[data-se="okta_verify-totp"] a.select-factor',
+      'div[data-se="okta_verify-totp"] a[data-se="button"]',
+      'a[aria-label*="enter a code"]',
+    ]
+    return new Promise(function (resolve) {
+      // Check both OTP input and authenticator menu simultaneously
+      var otpSelectors = [
+        'input[name="credentials.totp"]',
+        'input[name="answer"]',
+        'input[data-se="input-credentials.totp"]',
+      ]
+
+      var checkBoth = function () {
+        // First check if OTP input is already there (no selection needed)
+        for (var i = 0; i < otpSelectors.length; i++) {
+          var otpEl = document.querySelector(otpSelectors[i])
+          if (otpEl) return { type: 'otp', element: otpEl }
         }
-        setTimeout(function () {
-          fillInput(otpInput, code)
-          console.log('EOIR Auto-Login: OTP dolduruldu')
-          setTimeout(function () {
-            clickSubmit()
-            console.log('EOIR Auto-Login: OTP gonderildi. Giris tamamlandi.')
-          }, humanDelay(1000, 2500))
-        }, humanDelay(1500, 3000))
+        // Then check if authenticator selection menu is present
+        for (var j = 0; j < mfaSelectors.length; j++) {
+          var mfaEl = document.querySelector(mfaSelectors[j])
+          if (mfaEl) return { type: 'mfa', element: mfaEl }
+        }
+        return null
+      }
+
+      var found = checkBoth()
+      if (found) return resolve(found)
+
+      var observer = new MutationObserver(function () {
+        var result = checkBoth()
+        if (result) { observer.disconnect(); resolve(result) }
       })
-    }).catch(function () {
-      console.log('EOIR Auto-Login: OTP alani bulunamadi (timeout)')
+      observer.observe(document.documentElement, { childList: true, subtree: true })
+      setTimeout(function () { observer.disconnect(); resolve(null) }, 30000)
+    })
+  }
+
+  function fillAndSubmitOtp(otpInput) {
+    fetchOtpCode(1, 3, function (err, code) {
+      if (err) {
+        console.log('EOIR Auto-Login: OTP hatasi -', err)
+        return
+      }
+      setTimeout(function () {
+        fillInput(otpInput, code)
+        console.log('EOIR Auto-Login: OTP dolduruldu')
+        setTimeout(function () {
+          clickSubmit()
+          console.log('EOIR Auto-Login: OTP gonderildi. Giris tamamlandi.')
+        }, humanDelay(1000, 2500))
+      }, humanDelay(1500, 3000))
+    })
+  }
+
+  function handleOtp() {
+    handleAuthenticatorSelection().then(function (result) {
+      if (!result) {
+        console.log('EOIR Auto-Login: OTP alani veya MFA secim menusu bulunamadi (timeout)')
+        return
+      }
+
+      if (result.type === 'otp') {
+        // OTP input is already visible, fill it directly
+        console.log('EOIR Auto-Login: OTP alani bulundu -', result.element.name || result.element.id)
+        fillAndSubmitOtp(result.element)
+      } else if (result.type === 'mfa') {
+        // Authenticator selection menu found, click "Enter a code"
+        console.log('EOIR Auto-Login: MFA secim menusu bulundu, "Enter a code" seciliyor...')
+        setTimeout(function () {
+          result.element.click()
+          console.log('EOIR Auto-Login: "Enter a code" secildi, OTP alani bekleniyor...')
+
+          // Now wait for the OTP input field to appear
+          var otpSelectors = [
+            'input[name="credentials.totp"]',
+            'input[name="answer"]',
+            'input[data-se="input-credentials.totp"]',
+          ]
+          waitFor(otpSelectors, 30000).then(function (otpInput) {
+            console.log('EOIR Auto-Login: OTP alani bulundu -', otpInput.name || otpInput.id)
+            fillAndSubmitOtp(otpInput)
+          }).catch(function () {
+            console.log('EOIR Auto-Login: OTP alani bulunamadi (MFA secimi sonrasi timeout)')
+          })
+        }, humanDelay(1000, 2500))
+      }
     })
   }
 
