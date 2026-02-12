@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EOIR Auto-Login
 // @namespace    eoir-gateway
-// @version      2.4
+// @version      2.5
 // @description  EOIR portal auto-login (email + password + OTP)
 // @match        https://doj-login-ext.okta-gov.com/*
 // @match        https://portal.eoir.justice.gov/*
@@ -22,8 +22,8 @@
 
   console.log('EOIR Auto-Login: Baslatiliyor, Gateway =', GATEWAY_URL)
 
-  // --- EOIR portal: clear cookies only ---
-  if (window.location.hostname !== 'doj-login-ext.okta-gov.com') {
+  // --- Clear cookies helper ---
+  function clearAllCookies() {
     var cookies = document.cookie.split(';')
     for (var i = 0; i < cookies.length; i++) {
       var c = cookies[i].trim()
@@ -33,9 +33,24 @@
         document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + window.location.hostname + ';'
       }
     }
+  }
+
+  // --- EOIR portal: clear cookies only ---
+  if (window.location.hostname !== 'doj-login-ext.okta-gov.com') {
+    clearAllCookies()
     console.log('EOIR Auto-Login: EOIR portal cookies temizlendi')
     return
   }
+
+  // --- Okta login: clear cookies once and reload ---
+  if (!sessionStorage.getItem('eoir_cookies_cleared')) {
+    clearAllCookies()
+    sessionStorage.setItem('eoir_cookies_cleared', '1')
+    console.log('EOIR Auto-Login: Okta cookies temizlendi, sayfa yenileniyor...')
+    window.location.reload()
+    return
+  }
+  sessionStorage.removeItem('eoir_cookies_cleared')
 
   // Random delay between min-max ms to look human
   function humanDelay(min, max) {
