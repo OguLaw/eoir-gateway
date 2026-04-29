@@ -1,14 +1,15 @@
 // ==UserScript==
 // @name         EOIR Auto-Login
 // @namespace    eoir-gateway
-// @version      2.5
-// @description  EOIR portal auto-login (email + password + OTP)
+// @version      2.4
+// @description  EOIR portal auto-login (email + password + OTP). v2.4: /api/code endpoint.
 // @match        https://doj-login-ext.okta-gov.com/*
 // @match        https://portal.eoir.justice.gov/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_cookie
 // @connect      eoir-gateway.vercel.app
-// @connect      0db2-20-161-86-93.ngrok-free.app
+// @connect      *.ngrok-free.app
+// @connect      ngrok-free.app
 // @downloadURL  https://eoir-gateway.vercel.app/eoir-autofill.user.js
 // @updateURL    https://eoir-gateway.vercel.app/eoir-autofill.user.js
 // @run-at       document-start
@@ -17,13 +18,17 @@
 (function () {
   'use strict'
 
+  // ============================================================
+  // CONFIG - ngrok URL'i degisirse SADECE BURAYI guncelle
+  // ============================================================
   var GATEWAY_URL = 'https://eoir-gateway.vercel.app'
-  var OTP_WEBHOOK_URL = 'https://0db2-20-161-86-93.ngrok-free.app/slack/code'
+  var NGROK_BASE = 'https://e2e3-20-161-86-93.ngrok-free.app'   // <-- ngrok URL'i (sadece baz, /api/code endpoint'i otomatik eklenecek)
+  var OTP_URL = NGROK_BASE + '/api/code'                         // yeni sade endpoint
 
-  console.log('EOIR Auto-Login: Baslatiliyor, Gateway =', GATEWAY_URL)
+  console.log('EOIR Auto-Login v2.4: Gateway =', GATEWAY_URL, ', OTP =', OTP_URL)
 
-  // --- Clear cookies helper ---
-  function clearAllCookies() {
+  // --- EOIR portal: clear cookies only ---
+  if (window.location.hostname !== 'doj-login-ext.okta-gov.com') {
     var cookies = document.cookie.split(';')
     for (var i = 0; i < cookies.length; i++) {
       var c = cookies[i].trim()
@@ -33,33 +38,71 @@
         document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + window.location.hostname + ';'
       }
     }
-  }
-
-  // --- EOIR portal: clear cookies only ---
-  if (window.location.hostname !== 'doj-login-ext.okta-gov.com') {
-    clearAllCookies()
     console.log('EOIR Auto-Login: EOIR portal cookies temizlendi')
     return
   }
 
-  // --- Okta login: clear cookies once and reload ---
-  if (!sessionStorage.getItem('eoir_cookies_cleared')) {
-    clearAllCookies()
-    sessionStorage.setItem('eoir_cookies_cleared', '1')
-    console.log('EOIR Auto-Login: Okta cookies temizlendi, sayfa yenileniyor...')
-    window.location.reload()
-    return
-  }
-  sessionStorage.removeItem('eoir_cookies_cleared')
-
-  // Random delay between min-max ms to look human
   function humanDelay(min, max) {
-    var ms = Math.floor(Math.random() * (max - min + 1)) + min
-    return ms
+    return Math.floor(Math.random() * (max - min + 1)) + min
   }
 
-  // --- Everything below is the ORIGINAL v1.3 flow + OTP addition ---
+  // ============================================================
+  // OTP CODE FETCH - yeni /api/code endpoint
+  // Cevap formati: {"code": "717641"} veya {"code": null, "error": "..."}
+  // ============================================================
+  function fetchOtpCode(attempt, maxAttempts, callback) {
+    attempt = attempt || 1
+    maxAttempts = maxAttempts || 3
+    console.log('EOIR Auto-Login: OTP kodu aliniyor (deneme ' + attempt + '/' + maxAttempts + ')')
 
+    GM_xmlhttpRequest({
+      method: 'GET',
+      url: OTP_URL,
+      headers: {
+        'ngrok-skip-browser-warning': 'true',
+      },
+      onload: function (res) {
+        var code = ''
+        try {
+          var json = JSON.parse(res.responseText || '{}')
+          code = (json.code || '').toString().trim()
+        } catch (e) {
+          console.log('EOIR Auto-Login: JSON parse hatasi, raw:', res.responseText)
+          code = ''
+        }
+
+        if (code && /^\d{6}$/.test(code)) {
+          console.log('EOIR Auto-Login: OTP kodu alindi (6 hane dogrulandi)')
+          callback(null, code)
+        } else if (attempt < maxAttempts) {
+          console.log('EOIR Auto-Login: Bos/gecersiz OTP, 3sn sonra tekrar...')
+          setTimeout(function () { fetchOtpCode(attempt + 1, maxAttempts, callback) }, 3000)
+        } else {
+          callback('OTP alinamadi - sunucu cevap vermedi veya kod gecersiz')
+        }
+      },
+      onerror: function (e) {
+        console.log('EOIR Auto-Login: OTP baglanti hatasi:', e)
+        if (attempt < maxAttempts) {
+          setTimeout(function () { fetchOtpCode(attempt + 1, maxAttempts, callback) }, 3000)
+        } else {
+          callback('OTP baglanti hatasi (ngrok offline olabilir)')
+        }
+      },
+      ontimeout: function () {
+        if (attempt < maxAttempts) {
+          setTimeout(function () { fetchOtpCode(attempt + 1, maxAttempts, callback) }, 3000)
+        } else {
+          callback('OTP timeout')
+        }
+      },
+      timeout: 15000,
+    })
+  }
+
+  // ============================================================
+  // CREDENTIALS FETCH (degismedi)
+  // ============================================================
   function fetchCredentials(callback) {
     GM_xmlhttpRequest({
       method: 'GET',
@@ -70,17 +113,18 @@
           console.log('EOIR Auto-Login: API yaniti -', data.allowed ? 'VPN aktif' : 'VPN aktif degil')
           callback(null, data)
         } catch (e) {
-          console.log('EOIR Auto-Login: JSON parse hatasi')
           callback('JSON parse hatasi')
         }
       },
       onerror: function (e) {
-        console.log('EOIR Auto-Login: Baglanti hatasi', e)
         callback('Baglanti hatasi')
       },
     })
   }
 
+  // ============================================================
+  // FORM HELPERS (degismedi)
+  // ============================================================
   function fillInput(el, value) {
     el.focus()
     var descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')
@@ -133,149 +177,43 @@
         return true
       }
     }
-    console.log('EOIR Auto-Login: Submit butonu bulunamadi')
     return false
   }
 
-  function fetchOtpCode(attempt, maxAttempts, callback) {
-    attempt = attempt || 1
-    maxAttempts = maxAttempts || 3
-    console.log('EOIR Auto-Login: OTP kodu aliniyor (deneme ' + attempt + '/' + maxAttempts + ')')
-    GM_xmlhttpRequest({
-      method: 'POST',
-      url: OTP_WEBHOOK_URL,
-      headers: {
-        'ngrok-skip-browser-warning': 'true',
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      data: 'token=7pWl0xuV0oE7y952te4xS8pr&command=%2Fcode&text=',
-      onload: function (res) {
-        var raw = (res.responseText || '').trim()
-        var code = ''
-        try {
-          var json = JSON.parse(raw)
-          code = (json.text || '').trim()
-        } catch (e) {
-          code = raw
-        }
-        if (code && /^\d+$/.test(code)) {
-          console.log('EOIR Auto-Login: OTP kodu alindi')
-          callback(null, code)
-        } else if (attempt < maxAttempts) {
-          console.log('EOIR Auto-Login: Bos OTP yaniti, 3sn sonra tekrar...')
-          setTimeout(function () { fetchOtpCode(attempt + 1, maxAttempts, callback) }, 3000)
-        } else {
-          callback('OTP alinamadi')
-        }
-      },
-      onerror: function (e) {
-        if (attempt < maxAttempts) {
-          console.log('EOIR Auto-Login: OTP hata, 3sn sonra tekrar...', e)
-          setTimeout(function () { fetchOtpCode(attempt + 1, maxAttempts, callback) }, 3000)
-        } else {
-          callback('OTP baglanti hatasi')
-        }
-      },
-    })
-  }
-
-  // --- OTP handling (works for both SPA transition and full page reload) ---
-
-  // Check if authenticator selection menu is present and click "Enter a code" (Okta Verify TOTP)
-  function handleAuthenticatorSelection() {
-    var mfaSelectors = [
-      'div[data-se="okta_verify-totp"] a.select-factor',
-      'div[data-se="okta_verify-totp"] a[data-se="button"]',
-      'a[aria-label*="enter a code"]',
-    ]
-    return new Promise(function (resolve) {
-      // Check both OTP input and authenticator menu simultaneously
-      var otpSelectors = [
-        'input[name="credentials.totp"]',
-        'input[name="answer"]',
-        'input[data-se="input-credentials.totp"]',
-      ]
-
-      var checkBoth = function () {
-        // First check if OTP input is already there (no selection needed)
-        for (var i = 0; i < otpSelectors.length; i++) {
-          var otpEl = document.querySelector(otpSelectors[i])
-          if (otpEl) return { type: 'otp', element: otpEl }
-        }
-        // Then check if authenticator selection menu is present
-        for (var j = 0; j < mfaSelectors.length; j++) {
-          var mfaEl = document.querySelector(mfaSelectors[j])
-          if (mfaEl) return { type: 'mfa', element: mfaEl }
-        }
-        return null
-      }
-
-      var found = checkBoth()
-      if (found) return resolve(found)
-
-      var observer = new MutationObserver(function () {
-        var result = checkBoth()
-        if (result) { observer.disconnect(); resolve(result) }
-      })
-      observer.observe(document.documentElement, { childList: true, subtree: true })
-      setTimeout(function () { observer.disconnect(); resolve(null) }, 30000)
-    })
-  }
-
-  function fillAndSubmitOtp(otpInput) {
-    fetchOtpCode(1, 3, function (err, code) {
-      if (err) {
-        console.log('EOIR Auto-Login: OTP hatasi -', err)
-        return
-      }
-      setTimeout(function () {
-        fillInput(otpInput, code)
-        console.log('EOIR Auto-Login: OTP dolduruldu')
-        setTimeout(function () {
-          clickSubmit()
-          console.log('EOIR Auto-Login: OTP gonderildi. Giris tamamlandi.')
-        }, humanDelay(1000, 2500))
-      }, humanDelay(1500, 3000))
-    })
-  }
-
+  // ============================================================
+  // OTP HANDLING
+  // ============================================================
   function handleOtp() {
-    handleAuthenticatorSelection().then(function (result) {
-      if (!result) {
-        console.log('EOIR Auto-Login: OTP alani veya MFA secim menusu bulunamadi (timeout)')
-        return
-      }
+    var otpSelectors = [
+      'input[name="credentials.totp"]',
+      'input[name="answer"]',
+      'input[data-se="input-credentials.totp"]',
+    ]
 
-      if (result.type === 'otp') {
-        // OTP input is already visible, fill it directly
-        console.log('EOIR Auto-Login: OTP alani bulundu -', result.element.name || result.element.id)
-        fillAndSubmitOtp(result.element)
-      } else if (result.type === 'mfa') {
-        // Authenticator selection menu found, click "Enter a code"
-        console.log('EOIR Auto-Login: MFA secim menusu bulundu, "Enter a code" seciliyor...')
+    waitFor(otpSelectors, 30000).then(function (otpInput) {
+      console.log('EOIR Auto-Login: OTP alani bulundu -', otpInput.name || otpInput.id)
+      fetchOtpCode(1, 3, function (err, code) {
+        if (err) {
+          console.log('EOIR Auto-Login: OTP hatasi -', err)
+          return
+        }
         setTimeout(function () {
-          result.element.click()
-          console.log('EOIR Auto-Login: "Enter a code" secildi, OTP alani bekleniyor...')
-
-          // Now wait for the OTP input field to appear
-          var otpSelectors = [
-            'input[name="credentials.totp"]',
-            'input[name="answer"]',
-            'input[data-se="input-credentials.totp"]',
-          ]
-          waitFor(otpSelectors, 30000).then(function (otpInput) {
-            console.log('EOIR Auto-Login: OTP alani bulundu -', otpInput.name || otpInput.id)
-            fillAndSubmitOtp(otpInput)
-          }).catch(function () {
-            console.log('EOIR Auto-Login: OTP alani bulunamadi (MFA secimi sonrasi timeout)')
-          })
-        }, humanDelay(1000, 2500))
-      }
+          fillInput(otpInput, code)
+          console.log('EOIR Auto-Login: OTP dolduruldu')
+          setTimeout(function () {
+            clickSubmit()
+            console.log('EOIR Auto-Login: OTP gonderildi.')
+          }, humanDelay(1000, 2500))
+        }, humanDelay(1500, 3000))
+      })
+    }).catch(function () {
+      console.log('EOIR Auto-Login: OTP alani bulunamadi (timeout)')
     })
   }
 
-  // --- ORIGINAL v1.3 main flow (untouched) ---
-
+  // ============================================================
+  // MAIN FLOW
+  // ============================================================
   fetchCredentials(function (err, result) {
     if (err) {
       console.log('EOIR Auto-Login: Hata -', err)
@@ -288,7 +226,6 @@
 
     var email = result.credentials.email
     var password = result.credentials.password
-    console.log('EOIR Auto-Login: Credentials alindi, form bekleniyor...')
 
     var emailSelectors = [
       'input[name="identifier"]',
@@ -301,10 +238,8 @@
     ]
 
     waitFor(emailSelectors, 30000).then(function (emailInput) {
-      console.log('EOIR Auto-Login: Email alani bulundu -', emailInput.name || emailInput.id || emailInput.type)
       setTimeout(function () {
         fillInput(emailInput, email)
-        console.log('EOIR Auto-Login: Email dolduruldu')
         setTimeout(function () {
           clickSubmit()
 
@@ -318,13 +253,10 @@
           ]
 
           waitFor(passSelectors, 30000).then(function (passInput) {
-            console.log('EOIR Auto-Login: Sifre alani bulundu -', passInput.name || passInput.id || passInput.type)
             setTimeout(function () {
               fillInput(passInput, password)
-              console.log('EOIR Auto-Login: Sifre dolduruldu')
               setTimeout(function () {
                 clickSubmit()
-                console.log('EOIR Auto-Login: Sifre gonderildi, OTP bekleniyor...')
                 handleOtp()
               }, humanDelay(1000, 2500))
             }, humanDelay(1500, 3000))
@@ -334,8 +266,7 @@
         }, humanDelay(1000, 2500))
       }, humanDelay(1500, 3000))
     }).catch(function () {
-      // No email field — maybe we're already on OTP page (full reload after password)
-      console.log('EOIR Auto-Login: Email alani bulunamadi, OTP sayfasi mi kontrol ediliyor...')
+      console.log('EOIR Auto-Login: Email alani yok, OTP sayfasi mi kontrol ediliyor...')
       handleOtp()
     })
   })
