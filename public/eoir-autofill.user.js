@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EOIR Auto-Login
 // @namespace    eoir-gateway
-// @version      2.4
+// @version      2.5
 // @description  EOIR portal auto-login (email + password + OTP). v2.4: /api/code endpoint.
 // @match        https://doj-login-ext.okta-gov.com/*
 // @match        https://portal.eoir.justice.gov/*
