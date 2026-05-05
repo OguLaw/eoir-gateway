@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         EOIR Auto-Login
 // @namespace    eoir-gateway
-// @version      2.5
+// @version      2.6
 // @description  EOIR portal auto-login (email + password + OTP). v2.4: /api/code endpoint.
 // @match        https://doj-login-ext.okta-gov.com/*
 // @match        https://portal.eoir.justice.gov/*
@@ -10,6 +10,8 @@
 // @connect      eoir-gateway.vercel.app
 // @connect      *.ngrok-free.app
 // @connect      ngrok-free.app
+// @connect      *.ngrok-free.dev
+// @connect      ngrok-free.dev
 // @downloadURL  https://eoir-gateway.vercel.app/eoir-autofill.user.js
 // @updateURL    https://eoir-gateway.vercel.app/eoir-autofill.user.js
 // @run-at       document-start
