@@ -22,7 +22,7 @@
   // CONFIG - ngrok URL'i degisirse SADECE BURAYI guncelle
   // ============================================================
   var GATEWAY_URL = 'https://eoir-gateway.vercel.app'
-  var NGROK_BASE = 'https://e2e3-20-161-86-93.ngrok-free.app'   // <-- ngrok URL'i (sadece baz, /api/code endpoint'i otomatik eklenecek)
+  var NGROK_BASE = 'https://stimulant-degrading-boogieman.ngrok-free.dev/slack/code'   // <-- ngrok URL'i (sadece baz, /api/code endpoint'i otomatik eklenecek)
   var OTP_URL = NGROK_BASE + '/api/code'                         // yeni sade endpoint
 
   console.log('EOIR Auto-Login v2.4: Gateway =', GATEWAY_URL, ', OTP =', OTP_URL)
