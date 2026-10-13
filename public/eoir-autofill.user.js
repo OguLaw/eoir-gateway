@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         EOIR Auto-Login
 // @namespace    eoir-gateway
-// @version      2.6
-// @description  EOIR portal auto-login (email + password + OTP). v2.4: /api/code endpoint.
+// @version      2.7
+// @description  EOIR portal auto-login (email + password + OTP). v2.7: cift slash fix (/api/code).
 // @match        https://doj-login-ext.okta-gov.com/*
 // @match        https://portal.eoir.justice.gov/*
 // @grant        GM_xmlhttpRequest
@@ -24,10 +24,10 @@
   // CONFIG - ngrok URL'i degisirse SADECE BURAYI guncelle
   // ============================================================
   var GATEWAY_URL = 'https://eoir-gateway.vercel.app'
-  var NGROK_BASE = 'https://stimulant-degrading-boogieman.ngrok-free.dev/'   // <-- ngrok URL'i (sadece baz, /api/code endpoint'i otomatik eklenecek)
+  var NGROK_BASE = 'https://stimulant-degrading-boogieman.ngrok-free.dev'   // <-- ngrok URL'i (sadece baz, /api/code endpoint'i otomatik eklenecek)
   var OTP_URL = NGROK_BASE + '/api/code'                         // yeni sade endpoint
 
-  console.log('EOIR Auto-Login v2.4: Gateway =', GATEWAY_URL, ', OTP =', OTP_URL)
+  console.log('EOIR Auto-Login v2.7: Gateway =', GATEWAY_URL, ', OTP =', OTP_URL)
 
   // --- EOIR portal: clear cookies only ---
   if (window.location.hostname !== 'doj-login-ext.okta-gov.com') {
